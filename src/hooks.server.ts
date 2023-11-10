@@ -5,6 +5,7 @@ import { detectLocale } from '$lib/locale/i18n-util';
 import {
   initAcceptLanguageHeaderDetector,
 } from 'typesafe-i18n/detectors';
+import rtlDetect from 'rtl-detect';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const deafultLocale = event.cookies.get('lang') || detectLocale(initAcceptLanguageHeaderDetector(event.request)) || 'en'; // Prefer cookie; then header; then default to 'en'.
@@ -12,5 +13,9 @@ export const handle: Handle = async ({ event, resolve }) => {
   await loadLocaleAsync(locale);
   setLocale(locale);
   event.locals.locale = deafultLocale;
-  return resolve(event);
+  return resolve(event, {
+    transformPageChunk: ({ html }) => html.replace('%LANG%', deafultLocale)
+      .replace('%DIR%', rtlDetect.getLangDir(deafultLocale))
+  }
+  );
 };
